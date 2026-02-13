@@ -130,6 +130,7 @@
 		FR05 /* GameModeController.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModeController.swift; sourceTree = "<group>"; };
 		FR06 /* SettingsPaneView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneView.swift; sourceTree = "<group>"; };
 		FR07 /* MenuBarMenuView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarMenuView.swift; sourceTree = "<group>"; };
+		FR07A /* SetupChecklistView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupChecklistView.swift; sourceTree = "<group>"; };
 		FR08 /* GameMode4All.app */ = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GameMode4All.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FR09 /* Assets.xcassets */ = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FR10 /* GameMode4All.entitlements */ = { isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GameMode4All.entitlements; sourceTree = "<group>"; };
@@ -146,6 +147,7 @@
 				FR05 /* GameModeController.swift */,
 				FR06 /* SettingsPaneView.swift */,
 				FR07 /* MenuBarMenuView.swift */,
+				FR07A /* SetupChecklistView.swift */,
 				FR09 /* Assets.xcassets */,
 				FR10 /* GameMode4All.entitlements */,
 				FR11 /* Info.plist */,
@@ -177,6 +179,7 @@
 				BF05 /* GameModeController.swift in Sources */,
 				BF06 /* SettingsPaneView.swift in Sources */,
 				BF07 /* MenuBarMenuView.swift in Sources */,
+				BF07A /* SetupChecklistView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			target = TG01 /* GameMode4All */;
@@ -204,6 +207,7 @@
 		BF05 /* GameModeController.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR05; };
 		BF06 /* SettingsPaneView.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR06; };
 		BF07 /* MenuBarMenuView.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07; };
+		BF07A /* SetupChecklistView.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07A; };
 		BF09 /* Assets.xcassets in Resources */ = { isa = PBXBuildFile; fileRef = FR09; };
 
 		/* Target */
