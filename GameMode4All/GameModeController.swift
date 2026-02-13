@@ -17,15 +17,24 @@ import Foundation
 import SwiftUI
 import UserNotifications
 
-// MARK: - Debug log (writes to ~/Library/Application Support/GameMode4All/gamemode-debug.log)
+// MARK: - Debug log
+private let debugLoggingEnabledKey = "DebugLoggingEnabled"
+private let debugLogFileCustomPathKey = "DebugLogFileCustomPath"
+
 private enum GameModeDebugLog {
+    static var defaultLogFileURL: URL? {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("GameMode4All", isDirectory: true)
+            .appendingPathComponent("gamemode-debug.log")
+    }
+
     static func log(_ message: String) {
+        guard UserDefaults.standard.object(forKey: debugLoggingEnabledKey) as? Bool ?? true else { return }
+        guard let file = logFileURL else { return }
         let line = "\(ISO8601DateFormatter().string(from: Date())) \(message)\n"
-        guard let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("GameMode4All", isDirectory: true) else { return }
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let file = dir.appendingPathComponent("gamemode-debug.log")
         if let data = line.data(using: .utf8) {
+            let dir = file.deletingLastPathComponent()
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             if FileManager.default.fileExists(atPath: file.path) {
                 if let handle = try? FileHandle(forWritingTo: file) {
                     handle.seekToEndOfFile()
@@ -39,8 +48,10 @@ private enum GameModeDebugLog {
     }
 
     static var logFileURL: URL? {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("GameMode4All/gamemode-debug.log")
+        if let custom = UserDefaults.standard.string(forKey: debugLogFileCustomPathKey), !custom.isEmpty {
+            return URL(fileURLWithPath: custom)
+        }
+        return defaultLogFileURL
     }
 }
 
@@ -85,6 +96,7 @@ final class GameModeController: ObservableObject {
     init() {
         self.processNamesToWatch = UserDefaults.standard.stringArray(forKey: processNamesToWatchKey) ?? []
         self.processNamesByApp = Self.loadProcessNamesByApp()
+        self.debugLoggingEnabled = UserDefaults.standard.object(forKey: debugLoggingEnabledKey) as? Bool ?? true
         // Start observing at launch so Game Mode can turn on even if the user never opens Settings.
         startObservingAppLaunches()
     }
@@ -119,7 +131,7 @@ final class GameModeController: ObservableObject {
         processNamesToWatch.removeAll { $0 == name }
         // Remove from any app grouping so UI stays in sync
         if let bundleID = processNamesByApp.first(where: { $0.value.contains(name) })?.key {
-            var updated = processNamesByApp[bundleID]!.filter { $0 != name }
+            let updated = processNamesByApp[bundleID]!.filter { $0 != name }
             if updated.isEmpty { processNamesByApp.removeValue(forKey: bundleID) }
             else { processNamesByApp[bundleID] = updated }
         }
@@ -155,8 +167,28 @@ final class GameModeController: ObservableObject {
         return processNamesToWatch.filter { !underApp.contains($0) }
     }
 
-    /// URL of the debug log file (for "Open debug log" in Settings).
+    /// When true, debug messages are written to the log file. Defaults to true.
+    @Published var debugLoggingEnabled: Bool {
+        didSet { UserDefaults.standard.set(debugLoggingEnabled, forKey: debugLoggingEnabledKey) }
+    }
+
+    /// URL of the debug log file (for "Open debug log" in Settings). Uses custom path if set.
     var debugLogFileURL: URL? { GameModeDebugLog.logFileURL }
+
+    /// Presents a save panel to choose where the debug log file is written. Call from main thread.
+    func chooseDebugLogLocation() {
+        let panel = NSSavePanel()
+        panel.title = "Choose Debug Log Location"
+        panel.message = "Select where to save the debug log file."
+        panel.nameFieldStringValue = "gamemode-debug.log"
+        if let current = debugLogFileURL {
+            panel.directoryURL = current.deletingLastPathComponent()
+            panel.nameFieldStringValue = current.lastPathComponent
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        UserDefaults.standard.set(url.path, forKey: debugLogFileCustomPathKey)
+        objectWillChange.send()
+    }
 
     func startObservingAppLaunches() {
         guard launchObserver == nil else { return }

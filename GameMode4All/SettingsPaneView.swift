@@ -61,6 +61,7 @@ struct SettingsPaneView: View {
             }
 
             Section {
+                Button("Add CrossOver applications folder…") { appStore.addCrossOverFolder() }
                 if !appStore.crossOverFolderPaths.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(appStore.crossOverFolderPaths, id: \.self) { path in
@@ -78,7 +79,6 @@ struct SettingsPaneView: View {
                                 }
                             }
                         }
-                        Button("Add CrossOver applications folder…") { appStore.addCrossOverFolder() }
                         if appStore.crossOverApps.isEmpty {
                             Text("No applications found in the added folders.")
                                 .font(.caption)
@@ -100,14 +100,13 @@ struct SettingsPaneView: View {
                             .frame(height: 280)
                         }
                     }
-                } else {
-                    Button("Add CrossOver applications folder…") { appStore.addCrossOverFolder() }
                 }
             } header: {
                 SectionHeaderView(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder (e.g. in your Applications folder). Applications in that folder appear in the list below; select them to enable Game Mode when CrossOver is frontmost. Opening a CrossOver game launches CrossOver first.")
             }
 
             Section {
+                Toggle("Enable debug logging", isOn: $gameMode.debugLoggingEnabled)
                 if let url = gameMode.debugLogFileURL {
                     HStack {
                         Text(url.path)
@@ -119,6 +118,9 @@ struct SettingsPaneView: View {
                         Button("Open debug log") {
                             NSWorkspace.shared.open(url)
                         }
+                    }
+                    Button("Change location…") {
+                        gameMode.chooseDebugLogLocation()
                     }
                 }
             } header: {
