@@ -2,136 +2,47 @@
 //  SettingsPaneView.swift
 //  GameMode4All
 //
-//  System Settings–style pane: list of installed apps with checkboxes to enable Game Mode when launched.
+//  Main app window and settings content.
 //
 
 import AppKit
 import SwiftUI
 
-struct SettingsPaneView: View {
+// MARK: - Main app window (replaces Settings-style pane)
+
+struct MainAppView: View {
     @EnvironmentObject private var gameMode: GameModeController
     @EnvironmentObject private var appStore: InstalledAppStore
     @State private var searchText = ""
     @State private var isLoading = true
 
     var body: some View {
-        Form {
-            Section {
-                GameModeStatusRow(
-                    isAvailable: gameMode.isGamePolicyCtlAvailable,
-                    gameModeState: gameMode.gameModeState,
-                    policyState: gameMode.policyState
-                )
-            } header: {
-                SectionHeaderView(title: "Status", help: "Current Game Mode and policy status.")
-            }
-
-            Section {
-                if isLoading {
-                    HStack {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Loading applications…")
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                } else if filteredApps.isEmpty {
-                    Text("No applications found.")
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            ForEach(filteredApps, id: \.bundleID) { app in
-                                AppRowView(
-                                    app: app,
-                                    isSelected: appStore.isSelected(app),
-                                    onToggle: { appStore.toggleSelection(app) }
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 4)
-                    }
-                    .frame(height: 280)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                appHeader
+                AppCard(title: "Status", help: "Current Game Mode and policy status.") {
+                    GameModeStatusRow(
+                        isAvailable: gameMode.isGamePolicyCtlAvailable,
+                        gameModeState: gameMode.gameModeState,
+                        policyState: gameMode.policyState
+                    )
                 }
-            } header: {
-                SectionHeaderView(title: "Enable Game Mode when these apps launch", help: "Selected apps turn on Game Mode when full screen and frontmost (same as Apple); it turns off when you switch away. To detect fullscreen, add this app in System Settings → Privacy & Security → Accessibility. Requires Xcode (for gamepolicyctl) and Apple Silicon.")
-            }
-
-            Section {
-                Button("Add CrossOver applications folder…") { appStore.addCrossOverFolder() }
-                if !appStore.crossOverFolderPaths.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(appStore.crossOverFolderPaths, id: \.self) { path in
-                            HStack {
-                                Text(path)
-                                    .font(.caption)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Button("Remove", role: .destructive) {
-                                    if let index = appStore.crossOverFolderPaths.firstIndex(of: path) {
-                                        appStore.removeCrossOverFolder(at: index)
-                                    }
-                                }
-                            }
-                        }
-                        if appStore.crossOverApps.isEmpty {
-                            Text("No applications found in the added folders.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .padding(.vertical, 4)
-                        } else {
-                            ScrollView {
-                                LazyVStack(alignment: .leading, spacing: 0) {
-                                    ForEach(appStore.crossOverApps, id: \.bundleID) { app in
-                                        CrossOverAppRowView(
-                                            app: app,
-                                            appStore: appStore,
-                                            gameMode: gameMode
-                                        )
-                                    }
-                                }
-                                .padding(.horizontal, 4)
-                            }
-                            .frame(height: 280)
-                        }
-                    }
+                AppCard(title: "Enable Game Mode when these apps launch", help: "Selected apps turn on Game Mode when full screen and frontmost (same as Apple); it turns off when you switch away. To detect fullscreen, add this app in System Settings → Privacy & Security → Accessibility. Requires Xcode (for gamepolicyctl) and Apple Silicon.") {
+                    appsCardContent
                 }
-            } header: {
-                SectionHeaderView(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder (e.g. in your Applications folder). Applications in that folder appear in the list below; select them to enable Game Mode when CrossOver is frontmost. Opening a CrossOver game launches CrossOver first.")
-            }
-
-            Section {
-                Toggle("Enable debug logging", isOn: $gameMode.debugLoggingEnabled)
-                if let url = gameMode.debugLogFileURL {
-                    HStack {
-                        Text(url.path)
-                            .font(.caption)
-                            .lineLimit(2)
-                            .truncationMode(.middle)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Button("Open debug log") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }
-                    Button("Change location…") {
-                        gameMode.chooseDebugLogLocation()
-                    }
+                AppCard(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder. Applications in that folder appear below; select them to enable Game Mode when CrossOver is frontmost.") {
+                    crossOverCardContent
                 }
-            } header: {
-                SectionHeaderView(title: "Debug", help: "If Game Mode doesn't turn on, open the debug log after reproducing the issue (e.g. select an app, put it fullscreen) and share the last lines to diagnose. The log records frontmost app, fullscreen detection, and policy changes.")
+                AppCard(title: "Settings", help: "Start at login and debug logging options.") {
+                    settingsCardContent
+                }
             }
+            .padding(24)
         }
-        .formStyle(.grouped)
-        .navigationTitle("Game Mode for All")
         .searchable(text: $searchText, prompt: "Search applications")
         .onAppear {
             gameMode.refreshStatus()
+            gameMode.refreshStartAtLoginStatus()
             gameMode.startObservingAppLaunches()
             loadApps()
         }
@@ -140,11 +51,132 @@ struct SettingsPaneView: View {
         }
     }
 
+    private var appHeader: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "gamecontroller.fill")
+                .font(.system(size: 28))
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Game Mode for All")
+                    .font(.title2.weight(.semibold))
+                Text(statusSubtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(.bottom, 8)
+    }
+
+    private var statusSubtitle: String {
+        guard gameMode.isGamePolicyCtlAvailable else { return "Xcode required for gamepolicyctl" }
+        switch gameMode.gameModeState {
+        case .on, .temporary: return "Game Mode is on"
+        case .off: return "Game Mode is off"
+        case .unknown: return "Status unknown"
+        }
+    }
+
+    @ViewBuilder private var appsCardContent: some View {
+        if isLoading {
+            HStack {
+                ProgressView().scaleEffect(0.8)
+                Text("Loading applications…").foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+        } else if filteredApps.isEmpty {
+            Text("No applications found.")
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredApps, id: \.bundleID) { app in
+                        AppRowView(app: app, isSelected: appStore.isSelected(app), onToggle: { appStore.toggleSelection(app) })
+                    }
+                }
+            }
+            .frame(height: 260)
+        }
+    }
+
+    @ViewBuilder private var crossOverCardContent: some View {
+        Button("Add CrossOver applications folder…") { appStore.addCrossOverFolder() }
+            .buttonStyle(.bordered)
+        if !appStore.crossOverFolderPaths.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(appStore.crossOverFolderPaths, id: \.self) { path in
+                    HStack {
+                        Text(path)
+                            .font(.caption)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Remove", role: .destructive) {
+                            if let index = appStore.crossOverFolderPaths.firstIndex(of: path) {
+                                appStore.removeCrossOverFolder(at: index)
+                            }
+                        }
+                    }
+                }
+                if appStore.crossOverApps.isEmpty {
+                    Text("No applications found in the added folders.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 4)
+                } else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(appStore.crossOverApps, id: \.bundleID) { app in
+                                CrossOverAppRowView(app: app, appStore: appStore, gameMode: gameMode)
+                            }
+                        }
+                    }
+                    .frame(height: 260)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var settingsCardContent: some View {
+        HStack {
+            Text("Start at login")
+            Spacer()
+            Toggle("Start at login", isOn: Binding(
+                get: { gameMode.startAtLoginEnabled },
+                set: { gameMode.setStartAtLogin($0) }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
+        }
+        HStack {
+            Text("Enable debug logging")
+            Spacer()
+            Toggle("Enable debug logging", isOn: $gameMode.debugLoggingEnabled)
+                .labelsHidden()
+                .toggleStyle(.switch)
+        }
+        if let url = gameMode.debugLogFileURL {
+            HStack {
+                Text(url.path)
+                    .font(.caption)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Open") { NSWorkspace.shared.open(url) }
+            }
+            Button("Change location…") { gameMode.chooseDebugLogLocation() }
+        }
+    }
+
     private var filteredApps: [InstalledApp] {
         if searchText.isEmpty { return appStore.installedApps }
         return appStore.installedApps.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText)
-                || $0.bundleID.localizedCaseInsensitiveContains(searchText)
+            $0.name.localizedCaseInsensitiveContains(searchText) || $0.bundleID.localizedCaseInsensitiveContains(searchText)
         }
     }
 
@@ -157,6 +189,45 @@ struct SettingsPaneView: View {
                 isLoading = false
             }
         }
+    }
+}
+
+// MARK: - Card-style section for app layout
+
+private struct AppCard<Content: View>: View {
+    let title: String
+    let help: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Image(systemName: "questionmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
+                    .background(TooltipBackground(tooltip: help))
+            }
+            content()
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
+    }
+}
+
+// Keep SettingsPaneView for menu bar "Open" if it opens the same content
+struct SettingsPaneView: View {
+    @EnvironmentObject private var gameMode: GameModeController
+    @EnvironmentObject private var appStore: InstalledAppStore
+
+    var body: some View {
+        MainAppView()
+            .environmentObject(gameMode)
+            .environmentObject(appStore)
     }
 }
 
@@ -319,8 +390,8 @@ private struct AppRowView: View {
 }
 
 #Preview {
-    SettingsPaneView()
+    MainAppView()
         .environmentObject(GameModeController.shared)
         .environmentObject(InstalledAppStore.shared)
-        .frame(width: 420, height: 500)
+        .frame(width: 480, height: 620)
 }

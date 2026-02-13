@@ -2,7 +2,7 @@
 //  GameMode4AllApp.swift
 //  GameMode4All
 //
-//  macOS app: System Settings–style pane to select apps that enable Game Mode when launched.
+//  macOS app: enable Game Mode for any app when fullscreen and frontmost.
 //
 
 import SwiftUI
@@ -13,10 +13,14 @@ struct GameMode4AllApp: App {
     @StateObject private var appStore = InstalledAppStore.shared
 
     var body: some Scene {
-        Settings {
-            SettingsPaneView()
+        WindowGroup("Game Mode for All", id: "main") {
+            MainAppView()
                 .environmentObject(gameMode)
                 .environmentObject(appStore)
+        }
+        .defaultSize(width: 480, height: 620)
+        .commands {
+            CommandGroup(replacing: .newItem) { }
         }
 
         MenuBarExtra {

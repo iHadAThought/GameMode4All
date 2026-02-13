@@ -7,7 +7,7 @@ import SwiftUI
 
 struct MenuBarMenuView: View {
     @EnvironmentObject private var gameMode: GameModeController
-    @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Group {
@@ -22,8 +22,8 @@ struct MenuBarMenuView: View {
 
             Divider()
 
-            Button("Open Game Mode Settings…") {
-                openSettings()
+            Button("Open Game Mode for All…") {
+                openWindow(id: "main")
             }
             .keyboardShortcut(",", modifiers: .command)
 

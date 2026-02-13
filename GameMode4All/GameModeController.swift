@@ -14,6 +14,7 @@ import AppKit
 import ApplicationServices
 import Combine
 import Foundation
+import ServiceManagement
 import SwiftUI
 import UserNotifications
 
@@ -88,6 +89,9 @@ final class GameModeController: ObservableObject {
         didSet { saveProcessNamesByApp(); processWatchTimerNeedsUpdate() }
     }
 
+    /// Start at login (SMAppService.mainApp). Updated when the user toggles or when we refresh from system.
+    @Published private(set) var startAtLoginEnabled: Bool = false
+
     private var launchObserver: NSObjectProtocol?
     private var terminateObserver: NSObjectProtocol?
     private var fullscreenCheckTimer: Timer?
@@ -97,8 +101,25 @@ final class GameModeController: ObservableObject {
         self.processNamesToWatch = UserDefaults.standard.stringArray(forKey: processNamesToWatchKey) ?? []
         self.processNamesByApp = Self.loadProcessNamesByApp()
         self.debugLoggingEnabled = UserDefaults.standard.object(forKey: debugLoggingEnabledKey) as? Bool ?? true
+        refreshStartAtLoginStatus()
         // Start observing at launch so Game Mode can turn on even if the user never opens Settings.
         startObservingAppLaunches()
+    }
+
+    /// Reads the current login item status from the system.
+    func refreshStartAtLoginStatus() {
+        let status = SMAppService.mainApp.status
+        startAtLoginEnabled = (status == .enabled || status == .requiresApproval)
+    }
+
+    /// Enables or disables "Open at Login". Call from main thread.
+    func setStartAtLogin(_ enabled: Bool) {
+        if enabled {
+            try? SMAppService.mainApp.register()
+        } else {
+            try? SMAppService.mainApp.unregister()
+        }
+        refreshStartAtLoginStatus()
     }
 
     private static func loadProcessNamesByApp() -> [String: [String]] {
