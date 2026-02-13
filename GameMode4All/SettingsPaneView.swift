@@ -33,6 +33,9 @@ struct MainAppView: View {
                 AppCard(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder. Applications in that folder appear below; select them to enable Game Mode when CrossOver is frontmost.") {
                     crossOverCardContent
                 }
+                AppCard(title: "External Keyboard", help: "Swap Command (⌘) and Option (⌥) on a Windows-style external keyboard so they match Mac layout. Uses hidutil; apply at login re-applies the swap when you log in.") {
+                    ExternalKeyboardView()
+                }
                 AppCard(title: "Settings", help: "Start at login and debug logging options.") {
                     settingsCardContent
                 }
