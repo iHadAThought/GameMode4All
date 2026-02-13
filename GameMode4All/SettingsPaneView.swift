@@ -15,6 +15,7 @@ struct MainAppView: View {
     @EnvironmentObject private var appStore: InstalledAppStore
     @State private var searchText = ""
     @State private var isLoading = true
+    @State private var showUninstallConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -36,6 +37,9 @@ struct MainAppView: View {
                 AppCard(title: "External Keyboard", help: "Swap Command (⌘) and Option (⌥) on a Windows-style external keyboard so they match Mac layout. Uses hidutil; apply at login re-applies the swap when you log in.") {
                     ExternalKeyboardView()
                 }
+                AppCard(title: "Natural Scrolling", help: "Set natural scrolling separately for trackpad and mouse. When “separate” is on, the app uses an event tap (requires Accessibility). When off, uses the system setting.") {
+                    NaturalScrollingView()
+                }
                 AppCard(title: "Settings", help: "Start at login and debug logging options.") {
                     settingsCardContent
                 }
@@ -51,6 +55,17 @@ struct MainAppView: View {
         }
         .onDisappear {
             gameMode.refreshStatus()
+        }
+        .confirmationDialog("Uninstall Game Mode for All?", isPresented: $showUninstallConfirmation) {
+            Button("Uninstall", role: .destructive) {
+                UninstallHelper.performUninstall()
+            }
+            Button("Uninstall but leave Xcode", role: .destructive) {
+                UninstallHelper.performUninstall()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This will remove app data, the External Keyboard login item, and open System Settings so you can remove this app from Accessibility and Input Monitoring. The app will then quit. You can drag the app to Trash to remove it completely. Command Line Tools / Xcode are not modified.")
         }
     }
 
@@ -174,6 +189,10 @@ struct MainAppView: View {
             }
             Button("Change location…") { gameMode.chooseDebugLogLocation() }
         }
+        Button("Uninstall…", role: .destructive) {
+            showUninstallConfirmation = true
+        }
+        .padding(.top, 8)
     }
 
     private var filteredApps: [InstalledApp] {
@@ -396,5 +415,6 @@ private struct AppRowView: View {
     MainAppView()
         .environmentObject(GameModeController.shared)
         .environmentObject(InstalledAppStore.shared)
+        .environmentObject(ScrollPreferences.shared)
         .frame(width: 480, height: 620)
 }

@@ -11,6 +11,7 @@ import SwiftUI
 struct GameMode4AllApp: App {
     @StateObject private var gameMode = GameModeController.shared
     @StateObject private var appStore = InstalledAppStore.shared
+    @StateObject private var scrollPrefs = ScrollPreferences.shared
     @AppStorage("HasCompletedFirstRunSetup") private var hasCompletedFirstRun = false
 
     var body: some Scene {
@@ -20,12 +21,14 @@ struct GameMode4AllApp: App {
                     MainAppView()
                         .environmentObject(gameMode)
                         .environmentObject(appStore)
+                        .environmentObject(scrollPrefs)
                 } else {
                     SetupChecklistView(gameMode: gameMode, hasCompletedFirstRun: $hasCompletedFirstRun)
                 }
             }
             .environmentObject(gameMode)
             .environmentObject(appStore)
+            .environmentObject(scrollPrefs)
         }
         .defaultSize(width: 480, height: 620)
         .commands {
@@ -36,6 +39,7 @@ struct GameMode4AllApp: App {
             MenuBarMenuView()
                 .environmentObject(gameMode)
                 .environmentObject(appStore)
+                .environmentObject(scrollPrefs)
         } label: {
             Image(systemName: "gamecontroller.fill")
                 .symbolRenderingMode(.hierarchical)

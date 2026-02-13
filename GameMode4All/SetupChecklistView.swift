@@ -15,6 +15,7 @@ struct SetupChecklistView: View {
     @Binding var hasCompletedFirstRun: Bool
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
     @State private var accessibilityEnabled = false
+    @State private var inputMonitoringEnabled = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -46,6 +47,13 @@ struct SetupChecklistView: View {
                 ) {
                     openAccessibilitySettings()
                 }
+                checklistRow(
+                    checked: inputMonitoringEnabled,
+                    title: "Input Monitoring",
+                    subtitle: "Required for External Keyboard (swap ⌘ and ⌥) to work."
+                ) {
+                    openInputMonitoringSettings()
+                }
             }
 
             Spacer(minLength: 20)
@@ -61,6 +69,11 @@ struct SetupChecklistView: View {
             gameMode.refreshStatus()
             refreshNotificationStatus()
             refreshAccessibilityStatus()
+            refreshInputMonitoringStatus()
+            // Trigger HID access so macOS adds this app to Input Monitoring (required for External Keyboard).
+            DispatchQueue.global(qos: .userInitiated).async {
+                KeyboardManager.triggerInputMonitoringPrompt()
+            }
         }
     }
 
@@ -97,6 +110,7 @@ struct SetupChecklistView: View {
         case "Xcode or Command Line Tools": return "Install Command Line Tools"
         case "Notifications": return notificationStatus == .denied ? "Open System Settings" : "Enable Notifications"
         case "Accessibility": return "Open Accessibility Settings"
+        case "Input Monitoring": return "Open Input Monitoring Settings"
         default: return "Open Settings"
         }
     }
@@ -158,5 +172,19 @@ struct SetupChecklistView: View {
         }
         // User may add the app and return; refresh after a delay when window regains focus if needed.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { refreshAccessibilityStatus() }
+    }
+
+    private func refreshInputMonitoringStatus() {
+        // No public API to check Input Monitoring; show as unchecked until we can infer (e.g. after successful hidutil).
+        inputMonitoringEnabled = false
+    }
+
+    private func openInputMonitoringSettings() {
+        // Trigger HID access first so the app appears in Input Monitoring (or user gets the system prompt).
+        KeyboardManager.triggerInputMonitoringPrompt()
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_InputMonitoring") {
+            NSWorkspace.shared.open(url)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { refreshInputMonitoringStatus() }
     }
 }

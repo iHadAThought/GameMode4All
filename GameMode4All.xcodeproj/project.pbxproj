@@ -134,6 +134,10 @@
 		FR07B /* KeyboardDevice.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardDevice.swift; sourceTree = "<group>"; };
 		FR07C /* KeyboardManager.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardManager.swift; sourceTree = "<group>"; };
 		FR07D /* ExternalKeyboardView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalKeyboardView.swift; sourceTree = "<group>"; };
+		FR07E /* UninstallHelper.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UninstallHelper.swift; sourceTree = "<group>"; };
+		FR07F /* ScrollManager.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollManager.swift; sourceTree = "<group>"; };
+		FR07G /* ScrollPreferences.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollPreferences.swift; sourceTree = "<group>"; };
+		FR07H /* NaturalScrollingView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaturalScrollingView.swift; sourceTree = "<group>"; };
 		FR08 /* GameMode4All.app */ = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GameMode4All.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FR09 /* Assets.xcassets */ = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FR10 /* GameMode4All.entitlements */ = { isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GameMode4All.entitlements; sourceTree = "<group>"; };
@@ -154,6 +158,10 @@
 				FR07B /* KeyboardDevice.swift */,
 				FR07C /* KeyboardManager.swift */,
 				FR07D /* ExternalKeyboardView.swift */,
+				FR07E /* UninstallHelper.swift */,
+				FR07F /* ScrollManager.swift */,
+				FR07G /* ScrollPreferences.swift */,
+				FR07H /* NaturalScrollingView.swift */,
 				FR09 /* Assets.xcassets */,
 				FR10 /* GameMode4All.entitlements */,
 				FR11 /* Info.plist */,
@@ -189,6 +197,10 @@
 				BF07B /* KeyboardDevice.swift in Sources */,
 				BF07C /* KeyboardManager.swift in Sources */,
 				BF07D /* ExternalKeyboardView.swift in Sources */,
+				BF07E /* UninstallHelper.swift in Sources */,
+				BF07F /* ScrollManager.swift in Sources */,
+				BF07G /* ScrollPreferences.swift in Sources */,
+				BF07H /* NaturalScrollingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			target = TG01 /* GameMode4All */;
@@ -220,6 +232,10 @@
 		BF07B /* KeyboardDevice.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07B; };
 		BF07C /* KeyboardManager.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07C; };
 		BF07D /* ExternalKeyboardView.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07D; };
+		BF07E /* UninstallHelper.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07E; };
+		BF07F /* ScrollManager.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07F; };
+		BF07G /* ScrollPreferences.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07G; };
+		BF07H /* NaturalScrollingView.swift in Sources */ = { isa = PBXBuildFile; fileRef = FR07H; };
 		BF09 /* Assets.xcassets in Resources */ = { isa = PBXBuildFile; fileRef = FR09; };
 
 		/* Target */

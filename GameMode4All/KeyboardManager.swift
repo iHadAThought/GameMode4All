@@ -89,6 +89,12 @@ final class KeyboardManager: ObservableObject {
         }
     }
 
+    /// Call during setup so the app is added to Input Monitoring (required for External Keyboard).
+    /// Does not need the result; the HID access itself triggers the system to add the app to the list.
+    static func triggerInputMonitoringPrompt() {
+        _ = enumerateKeyboards(builtInVendorID: 0x05AC)
+    }
+
     // MARK: - Static helpers (including for Launch Agent)
 
     private static let leftAlt    = 0x7000000E2
