@@ -31,6 +31,7 @@ Game Mode is intended for gaming or focused app sessions. When it’s on, backgr
 2. **Open settings** — click the menu bar icon, then **“Open Game Mode Settings…”** (or use **⌘,** when the app is focused). This opens the main settings window.
 3. **Choose apps** — the pane lists installed applications from `/Applications`, `/System/Applications`, and your user `~/Applications`. Check the apps that should enable Game Mode when they start.
 4. **Behavior** — leave **“Turn Game Mode back to automatic when no selected app is running”** on so that when you quit the last selected app, Game Mode returns to the system default.
+5. **Keyboard (Modifier Keys)** — optionally swap Command (⌘) and Option (⌥) for any connected keyboard (like System Settings → Keyboard → Modifier Keys). Uses `hidutil`; changes are temporary and reset after restart.
 
 Game Mode is turned **on** when you launch any selected app, and (if the option above is on) is set back to **automatic** when none of those apps are running.
 
@@ -38,6 +39,7 @@ Game Mode is turned **on** when you launch any selected app, and (if the option 
 
 - The app uses **`xcrun gamepolicyctl game-mode set on|auto`**, which is provided by Xcode. If Xcode is not installed (or not at `/Applications/Xcode.app`), the status will show that Game Mode control is unavailable.
 - It observes **app launch/quit** via `NSWorkspace.didLaunchApplicationNotification` and `didTerminateApplicationNotification`, and keeps a list of selected apps by **bundle ID** in UserDefaults.
+- **Keyboard (Modifier Keys)** is integrated from KeySwap: IOKit enumerates HID keyboards, and **`hidutil`** applies `UserKeyMapping` to swap ⌘ and ⌥. App Sandbox must be disabled (already is) for `hidutil` to run.
 - The settings UI is a standard SwiftUI **Form** with search, similar to a System Settings pane. The app does not install a real third-party pane inside System Settings (Apple does not support that on modern macOS); instead it provides its own settings window.
 
 ## Project structure
@@ -47,6 +49,7 @@ Game Mode is turned **on** when you launch any selected app, and (if the option 
 - **InstalledAppsProvider.swift** — Enumerates `.app` bundles under `/Applications`, `/System/Applications`, and the user Applications directory.
 - **InstalledAppStore.swift** — Persists selected bundle IDs in UserDefaults and exposes them to the UI.
 - **GameModeController.swift** — Runs `gamepolicyctl`, observes app launch/terminate, and turns Game Mode on/auto as needed.
+- **KeyboardInfo.swift** / **KeyboardManager.swift** — KeySwap integration: enumerate keyboards (IOKit), swap Command ⇄ Option via `hidutil`.
 - **MenuBarMenuView.swift** — Menu bar dropdown: status, “Open Game Mode Settings…”, Quit.
 
 ## License

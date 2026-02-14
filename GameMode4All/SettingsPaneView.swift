@@ -17,6 +17,7 @@ struct MainAppView: View {
     @State private var searchText = ""
     @State private var isLoading = true
     @State private var showUninstallConfirmation = false
+    @StateObject private var keyboardManager = KeyboardManager()
 
     var body: some View {
         ScrollView {
@@ -34,6 +35,9 @@ struct MainAppView: View {
                 }
                 AppCard(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder. Games and apps in that folder appear below; select those games or apps to enable Game Mode when CrossOver is frontmost.") {
                     crossOverCardContent
+                }
+                AppCard(title: "Keyboard (Modifier Keys)", help: "Swap Command (⌘) and Option (⌥) for a selected keyboard, like System Settings → Keyboard → Modifier Keys. Uses hidutil; changes are temporary and reset after restart.") {
+                    keyboardCardContent
                 }
                 AppCard(title: "Settings", help: "Start GameMode4All at login and debug logging options.") {
                     settingsCardContent
@@ -150,6 +154,53 @@ struct MainAppView: View {
                     }
                     .frame(height: 260)
                 }
+            }
+        }
+    }
+
+    @ViewBuilder private var keyboardCardContent: some View {
+        if keyboardManager.keyboards.isEmpty {
+            Text("No keyboards detected.")
+                .foregroundStyle(.secondary)
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                Picker("Keyboard", selection: $keyboardManager.selectedKeyboard) {
+                    Text("Select…").tag(nil as KeyboardInfo?)
+                    ForEach(keyboardManager.keyboards) { keyboard in
+                        Text(keyboard.displayName).tag(keyboard as KeyboardInfo?)
+                    }
+                }
+                .pickerStyle(.menu)
+                Text("Swap Command (⌘) and Option (⌥) for the selected keyboard. Changes take effect immediately.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 12) {
+                    Button {
+                        keyboardManager.swapCommandAndOption()
+                    } label: {
+                        Label("Swap Command ⇄ Option", systemImage: "arrow.left.arrow.right")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(keyboardManager.selectedKeyboard == nil)
+                    Button {
+                        keyboardManager.resetModifiers()
+                    } label: {
+                        Label("Reset", systemImage: "arrow.counterclockwise")
+                    }
+                    .disabled(keyboardManager.selectedKeyboard == nil)
+                    Spacer()
+                }
+                if !keyboardManager.statusMessage.isEmpty {
+                    Text(keyboardManager.statusMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Button {
+                    keyboardManager.refreshKeyboards()
+                } label: {
+                    Label("Refresh Keyboards", systemImage: "arrow.clockwise")
+                }
+                .buttonStyle(.plain)
             }
         }
     }
