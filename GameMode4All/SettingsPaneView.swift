@@ -18,8 +18,8 @@ struct MainAppView: View {
     @State private var crossOverSearchText = ""
     @State private var isLoading = true
     @State private var showUninstallConfirmation = false
-    @State private var isAppsListExpanded = true
-    @State private var isCrossOverListExpanded = true
+    @AppStorage("IsAppsListExpanded") private var isAppsListExpanded = true
+    @AppStorage("IsCrossOverListExpanded") private var isCrossOverListExpanded = true
     @StateObject private var keyboardManager = KeyboardManager()
 
     var body: some View {
@@ -33,13 +33,13 @@ struct MainAppView: View {
                         policyState: gameMode.policyState
                     )
                 }
-                AppCard(title: "Enable Game Mode when these apps launch", help: "Selected games or apps turn on Game Mode when full screen and frontmost (same as Apple); it turns off when you switch away. To detect fullscreen, add this app in System Settings → Privacy & Security → Accessibility. Requires Xcode (for gamepolicyctl) and Apple Silicon.") {
+                AppCard(title: "Mac Apps", help: "Selected games or apps turn on Game Mode when full screen and frontmost (same as Apple); it turns off when you switch away. To detect fullscreen, add this app in System Settings → Privacy & Security → Accessibility. Requires Xcode (for gamepolicyctl) and Apple Silicon.") {
                     appsCardContent
                 }
                 AppCard(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder. Games and apps in that folder appear below; select those games or apps to enable Game Mode when CrossOver is frontmost.") {
                     crossOverCardContent
                 }
-                AppCard(title: "Keyboard (Modifier Keys)", help: "Swap Command (⌘) and Option (⌥) for a selected keyboard, like System Settings → Keyboard → Modifier Keys. Uses hidutil; changes are temporary and reset after restart.") {
+                AppCard(title: "Keyboard (Modifier Keys)", help: "Swap Command (⌘) and Option (⌥) for a selected keyboard, like System Settings → Keyboard → Modifier Keys. Uses hidutil. Choose one: \"Save swap at login\" (Launch Agent re-applies after restart) or \"Swap keys in Game Mode\" (swap only when Game Mode is on).") {
                     keyboardCardContent
                 }
                 AppCard(title: "Settings", help: "Start GameMode4All at login and debug logging options.") {
@@ -203,6 +203,20 @@ struct MainAppView: View {
                     }
                     .disabled(keyboardManager.selectedKeyboard == nil)
                     Spacer()
+                }
+                HStack {
+                    Text("Save swap at login")
+                    Spacer()
+                    Toggle("Save swap at login", isOn: $keyboardManager.saveSwapAtLogin)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                }
+                HStack {
+                    Text("Swap keys in Game Mode")
+                    Spacer()
+                    Toggle("Swap keys in Game Mode", isOn: $keyboardManager.swapInGameMode)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
                 }
                 if !keyboardManager.statusMessage.isEmpty {
                     Text(keyboardManager.statusMessage)
