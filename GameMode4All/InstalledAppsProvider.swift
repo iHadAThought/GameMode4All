@@ -90,24 +90,12 @@ enum InstalledAppsProvider {
         return result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// Returns a list of installed applications. Pass `extraFolders` when the user has added a folder (e.g. CrossOver) via the picker; use security-scoped access before calling. Does not include apps from extraFolders (those go in the CrossOver list).
+    /// Returns a list of installed applications. Excludes CrossOver apps (those appear only in the CrossOver section when the user adds the folder).
     static func loadInstalledApplications(extraFolders: [URL]? = nil) -> [InstalledApp] {
         var seen = Set<String>()
         var result: [InstalledApp] = []
 
-        // 1) User-chosen folder(s) are NOT included here — they are shown in the CrossOver section only.
-
-        // 2) Dedicated CrossOver scan from real home (may be blocked by sandbox)
-        if let home = realUserHomeDirectory() {
-            for folder in ["CrossOver", "Crossover"] {
-                let crossoverRoot = URL(fileURLWithPath: "\(home)/Applications/\(folder)", isDirectory: true)
-                result.append(contentsOf: enumerateCrossOverApps(at: crossoverRoot, seen: &seen))
-            }
-        }
-
-        // 3) Standard scan of all other paths
         for baseURL in searchPaths {
-            // Skip CrossOver paths we already scanned (avoid duplicates)
             let pathLower = baseURL.path.lowercased()
             if pathLower.contains("crossover") { continue }
 
@@ -118,6 +106,9 @@ enum InstalledAppsProvider {
                 }
             }
         }
+
+        // Exclude CrossOver apps (from ~/Applications/CrossOver, bottle dir, etc.) — they appear only in the CrossOver section
+        result = result.filter { !$0.path.lowercased().contains("crossover") }
 
         return result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }

@@ -14,9 +14,12 @@ struct MainAppView: View {
     @EnvironmentObject private var gameMode: GameModeController
     @EnvironmentObject private var appStore: InstalledAppStore
     @EnvironmentObject private var firstRunState: FirstRunState
-    @State private var searchText = ""
+    @State private var appsSearchText = ""
+    @State private var crossOverSearchText = ""
     @State private var isLoading = true
     @State private var showUninstallConfirmation = false
+    @State private var isAppsListExpanded = true
+    @State private var isCrossOverListExpanded = true
     @StateObject private var keyboardManager = KeyboardManager()
 
     var body: some View {
@@ -45,7 +48,6 @@ struct MainAppView: View {
             }
             .padding(24)
         }
-        .searchable(text: $searchText, prompt: "Search applications")
         .onAppear {
             gameMode.refreshStatus()
             gameMode.refreshStartAtLoginStatus()
@@ -108,14 +110,20 @@ struct MainAppView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(filteredApps, id: \.bundleID) { app in
-                        AppRowView(app: app, isSelected: appStore.isSelected(app), onToggle: { appStore.toggleSelection(app) })
+            DisclosureGroup(isExpanded: $isAppsListExpanded) {
+                TextField("Search applications…", text: $appsSearchText)
+                    .textFieldStyle(.roundedBorder)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(filteredApps, id: \.bundleID) { app in
+                            AppRowView(app: app, isSelected: appStore.isSelected(app), onToggle: { appStore.toggleSelection(app) })
+                        }
                     }
                 }
+                .frame(height: 260)
+            } label: {
+                Text("Applications (\(filteredApps.count))")
             }
-            .frame(height: 260)
         }
     }
 
@@ -145,14 +153,20 @@ struct MainAppView: View {
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 4)
                 } else {
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(appStore.crossOverApps, id: \.bundleID) { app in
-                                CrossOverAppRowView(app: app, appStore: appStore, gameMode: gameMode)
+                    DisclosureGroup(isExpanded: $isCrossOverListExpanded) {
+                        TextField("Search games and apps…", text: $crossOverSearchText)
+                            .textFieldStyle(.roundedBorder)
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 0) {
+                                ForEach(filteredCrossOverApps, id: \.bundleID) { app in
+                                    CrossOverAppRowView(app: app, appStore: appStore, gameMode: gameMode)
+                                }
                             }
                         }
+                        .frame(height: 260)
+                    } label: {
+                        Text("Games and apps (\(filteredCrossOverApps.count))")
                     }
-                    .frame(height: 260)
                 }
             }
         }
@@ -247,9 +261,16 @@ struct MainAppView: View {
     }
 
     private var filteredApps: [InstalledApp] {
-        if searchText.isEmpty { return appStore.installedApps }
+        if appsSearchText.isEmpty { return appStore.installedApps }
         return appStore.installedApps.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) || $0.bundleID.localizedCaseInsensitiveContains(searchText)
+            $0.name.localizedCaseInsensitiveContains(appsSearchText) || $0.bundleID.localizedCaseInsensitiveContains(appsSearchText)
+        }
+    }
+
+    private var filteredCrossOverApps: [InstalledApp] {
+        if crossOverSearchText.isEmpty { return appStore.crossOverApps }
+        return appStore.crossOverApps.filter {
+            $0.name.localizedCaseInsensitiveContains(crossOverSearchText) || $0.bundleID.localizedCaseInsensitiveContains(crossOverSearchText)
         }
     }
 
