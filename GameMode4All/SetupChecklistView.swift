@@ -18,7 +18,7 @@ struct SetupChecklistView: View {
         VStack(alignment: .leading, spacing: 24) {
             Text("Setup")
                 .font(.title.weight(.semibold))
-            Text("Complete these steps so Game Mode for All can run correctly.")
+            Text("Complete these steps so GameMode4All can run correctly.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 

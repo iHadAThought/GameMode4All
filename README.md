@@ -1,4 +1,4 @@
-# Game Mode for All
+# GameMode4All
 
 A macOS menu bar app that adds a **System Settings–style pane** to choose which applications should turn on **Game Mode** when they launch. When any selected app starts, Game Mode is enabled automatically; when the last selected app quits, it can switch back to the system default.
 
@@ -7,6 +7,17 @@ A macOS menu bar app that adds a **System Settings–style pane** to choose whic
 - **macOS 14 (Sonoma) or later**
 - **Apple Silicon Mac** (Game Mode is not available on Intel Macs)
 - **Xcode** installed (for the `gamepolicyctl` tool; the app does not ship it)
+
+## What Game Mode does to your Mac
+
+When Game Mode is on, macOS optimizes the system for your game or app:
+
+- **CPU & GPU priority** — Your game or app gets the highest priority access to the CPU and GPU. Background tasks and services are suppressed (via `gamepolicyd` and RunningBoard) so the game or app receives more resources. This typically results in smoother, more consistent frame rates and improved responsiveness.
+- **Higher GPU usage** — Your game or app can use a larger share of GPU capacity; measurements show GPU usage often increases from ~50% in windowed mode to over 80% when Game Mode is enabled.
+- **Reduced input latency** — Bluetooth sampling is doubled for wireless game controllers and accessories, cutting input lag.
+- **Reduced audio latency** — The same Bluetooth change lowers audio latency for wireless headsets like AirPods.
+
+Game Mode is intended for gaming or focused app sessions. When it’s on, background work (updates, indexing, etc.) is deprioritized, so you may notice other apps running slightly slower if you switch away.
 
 ## How to build
 

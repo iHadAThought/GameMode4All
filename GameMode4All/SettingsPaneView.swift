@@ -13,6 +13,7 @@ import SwiftUI
 struct MainAppView: View {
     @EnvironmentObject private var gameMode: GameModeController
     @EnvironmentObject private var appStore: InstalledAppStore
+    @EnvironmentObject private var firstRunState: FirstRunState
     @State private var searchText = ""
     @State private var isLoading = true
     @State private var showUninstallConfirmation = false
@@ -21,17 +22,17 @@ struct MainAppView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 appHeader
-                AppCard(title: "Status", help: "Current Game Mode and policy status.") {
+                AppCard(title: "Status", help: "Current Game Mode and policy status for your game or app.") {
                     GameModeStatusRow(
                         isAvailable: gameMode.isGamePolicyCtlAvailable,
                         gameModeState: gameMode.gameModeState,
                         policyState: gameMode.policyState
                     )
                 }
-                AppCard(title: "Enable Game Mode when these apps launch", help: "Selected apps turn on Game Mode when full screen and frontmost (same as Apple); it turns off when you switch away. To detect fullscreen, add this app in System Settings → Privacy & Security → Accessibility. Requires Xcode (for gamepolicyctl) and Apple Silicon.") {
+                AppCard(title: "Enable Game Mode when these apps launch", help: "Selected games or apps turn on Game Mode when full screen and frontmost (same as Apple); it turns off when you switch away. To detect fullscreen, add this app in System Settings → Privacy & Security → Accessibility. Requires Xcode (for gamepolicyctl) and Apple Silicon.") {
                     appsCardContent
                 }
-                AppCard(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder. Applications in that folder appear below; select them to enable Game Mode when CrossOver is frontmost.") {
+                AppCard(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder. Games and apps in that folder appear below; select those games or apps to enable Game Mode when CrossOver is frontmost.") {
                     crossOverCardContent
                 }
                 AppCard(title: "Settings", help: "Start GameMode4All at login and debug logging options.") {
@@ -50,7 +51,7 @@ struct MainAppView: View {
         .onDisappear {
             gameMode.refreshStatus()
         }
-        .confirmationDialog("Uninstall Game Mode for All?", isPresented: $showUninstallConfirmation) {
+        .confirmationDialog("Uninstall GameMode4All?", isPresented: $showUninstallConfirmation) {
             Button("Uninstall", role: .destructive) {
                 UninstallHelper.performUninstall()
             }
@@ -69,7 +70,7 @@ struct MainAppView: View {
                 .font(.system(size: 28))
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Game Mode for All")
+                Text("GameMode4All")
                     .font(.title2.weight(.semibold))
                 Text(statusSubtitle)
                     .font(.subheadline)
@@ -83,7 +84,7 @@ struct MainAppView: View {
     private var statusSubtitle: String {
         guard gameMode.isGamePolicyCtlAvailable else { return "Xcode required for gamepolicyctl" }
         switch gameMode.gameModeState {
-        case .on, .temporary: return "Game Mode is on"
+        case .on, .temporary: return "Game Mode is on for your game or app"
         case .off: return "Game Mode is off"
         case .unknown: return "Status unknown"
         }
@@ -183,8 +184,13 @@ struct MainAppView: View {
             }
             Button("Change location…") { gameMode.chooseDebugLogLocation() }
         }
-        Button("Uninstall…", role: .destructive) {
-            showUninstallConfirmation = true
+        HStack(spacing: 12) {
+            Button("Reopen setup") {
+                firstRunState.hasCompletedFirstRun = false
+            }
+            Button("Uninstall…", role: .destructive) {
+                showUninstallConfirmation = true
+            }
         }
         .padding(.top, 8)
     }
@@ -334,7 +340,7 @@ private struct GameModeStatusRow: View {
 
     var body: some View {
         if !isAvailable {
-            Label("Game Mode control unavailable (install Xcode for gamepolicyctl)", systemImage: "exclamationmark.triangle.fill")
+            Label("Game Mode control unavailable for games and apps (install Xcode for gamepolicyctl)", systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
         } else {
             HStack {
@@ -348,9 +354,9 @@ private struct GameModeStatusRow: View {
 
     private var statusText: String {
         switch gameModeState {
-        case .on: return "Game Mode is on"
+        case .on: return "Game Mode is on for your game or app"
         case .off: return "Game Mode is off"
-        case .temporary: return "Game Mode is on (temporary)"
+        case .temporary: return "Game Mode is on (temporary) for your game or app"
         case .unknown: return "Game Mode status unknown"
         }
     }

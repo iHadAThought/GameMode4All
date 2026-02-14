@@ -63,7 +63,7 @@ final class StatusBarController: NSObject {
         menu.addItem(NSMenuItem.separator())
 
         let openItem = NSMenuItem(
-            title: "Open Game Mode for All…",
+            title: "Open GameMode4All…",
             action: #selector(openMainWindow),
             keyEquivalent: ","
         )
@@ -72,7 +72,7 @@ final class StatusBarController: NSObject {
         menu.addItem(NSMenuItem.separator())
 
         let quitItem = NSMenuItem(
-            title: "Quit Game Mode for All",
+            title: "Quit GameMode4All",
             action: #selector(quit),
             keyEquivalent: "q"
         )
@@ -102,7 +102,7 @@ final class StatusBarController: NSObject {
 
     @objc private func openMainWindow() {
         NSApp.activate(ignoringOtherApps: true)
-        if let window = NSApp.windows.first(where: { $0.title.contains("Game Mode") }) {
+        if let window = NSApp.windows.first(where: { $0.title.contains("GameMode4All") }) {
             window.makeKeyAndOrderFront(nil)
         }
     }

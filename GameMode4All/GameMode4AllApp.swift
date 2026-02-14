@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func hideMainWindow() {
-        NSApp.windows.first { $0.title.contains("Game Mode") }?.orderOut(nil)
+        NSApp.windows.first { $0.title.contains("GameMode4All") }?.orderOut(nil)
     }
 }
 
@@ -30,17 +30,21 @@ struct GameMode4AllApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var gameMode = GameModeController.shared
     @StateObject private var appStore = InstalledAppStore.shared
-    @AppStorage("HasCompletedFirstRunSetup") private var hasCompletedFirstRun = false
+    @StateObject private var firstRunState = FirstRunState()
 
     var body: some Scene {
-        WindowGroup("Game Mode for All", id: "main") {
+        WindowGroup("GameMode4All", id: "main") {
             Group {
-                if hasCompletedFirstRun {
+                if firstRunState.hasCompletedFirstRun {
                     MainAppView()
                         .environmentObject(gameMode)
                         .environmentObject(appStore)
+                        .environmentObject(firstRunState)
                 } else {
-                    SetupChecklistView(gameMode: gameMode, hasCompletedFirstRun: $hasCompletedFirstRun)
+                    SetupChecklistView(gameMode: gameMode, hasCompletedFirstRun: Binding(
+                        get: { firstRunState.hasCompletedFirstRun },
+                        set: { firstRunState.hasCompletedFirstRun = $0 }
+                    ))
                 }
             }
             .environmentObject(gameMode)
@@ -50,5 +54,19 @@ struct GameMode4AllApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
         }
+    }
+}
+
+// MARK: - First run state (reopen setup from Settings)
+
+private let kHasCompletedFirstRunSetup = "HasCompletedFirstRunSetup"
+
+final class FirstRunState: ObservableObject {
+    @Published var hasCompletedFirstRun: Bool {
+        didSet { UserDefaults.standard.set(hasCompletedFirstRun, forKey: kHasCompletedFirstRunSetup) }
+    }
+
+    init() {
+        self.hasCompletedFirstRun = UserDefaults.standard.bool(forKey: kHasCompletedFirstRunSetup)
     }
 }

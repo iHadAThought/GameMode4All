@@ -22,14 +22,14 @@ struct MenuBarMenuView: View {
 
             Divider()
 
-            Button("Open Game Mode for All…") {
+            Button("Open GameMode4All…") {
                 openWindow(id: "main")
             }
             .keyboardShortcut(",", modifiers: .command)
 
             Divider()
 
-            Button("Quit Game Mode for All") {
+            Button("Quit GameMode4All") {
                 NSApplication.shared.terminate(nil)
             }
             .keyboardShortcut("q", modifiers: .command)
