@@ -2,20 +2,17 @@
 //  SetupChecklistView.swift
 //  GameMode4All
 //
-//  First-run checklist: Xcode/CLI, notifications, accessibility.
+//  First-run checklist: Xcode/CLI, accessibility.
 //
 
 import ApplicationServices
 import AppKit
 import SwiftUI
-import UserNotifications
 
 struct SetupChecklistView: View {
     @ObservedObject var gameMode: GameModeController
     @Binding var hasCompletedFirstRun: Bool
-    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
     @State private var accessibilityEnabled = false
-    @State private var inputMonitoringEnabled = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -34,25 +31,11 @@ struct SetupChecklistView: View {
                     installCommandLineTools()
                 }
                 checklistRow(
-                    checked: notificationStatus == .authorized,
-                    title: "Notifications",
-                    subtitle: "Optional: get notified when Game Mode turns on or off."
-                ) {
-                    requestOrOpenNotificationSettings()
-                }
-                checklistRow(
                     checked: accessibilityEnabled,
                     title: "Accessibility",
                     subtitle: "Optional: detect fullscreen for “match Apple” behavior."
                 ) {
                     openAccessibilitySettings()
-                }
-                checklistRow(
-                    checked: inputMonitoringEnabled,
-                    title: "Input Monitoring",
-                    subtitle: "Required for External Keyboard (swap ⌘ and ⌥) to work."
-                ) {
-                    openInputMonitoringSettings()
                 }
             }
 
@@ -67,13 +50,7 @@ struct SetupChecklistView: View {
         .frame(minWidth: 420, minHeight: 380)
         .onAppear {
             gameMode.refreshStatus()
-            refreshNotificationStatus()
             refreshAccessibilityStatus()
-            refreshInputMonitoringStatus()
-            // Trigger HID access so macOS adds this app to Input Monitoring (required for External Keyboard).
-            DispatchQueue.global(qos: .userInitiated).async {
-                KeyboardManager.triggerInputMonitoringPrompt()
-            }
         }
     }
 
@@ -108,9 +85,7 @@ struct SetupChecklistView: View {
     private func buttonTitle(for title: String) -> String {
         switch title {
         case "Xcode or Command Line Tools": return "Install Command Line Tools"
-        case "Notifications": return notificationStatus == .denied ? "Open System Settings" : "Enable Notifications"
         case "Accessibility": return "Open Accessibility Settings"
-        case "Input Monitoring": return "Open Input Monitoring Settings"
         default: return "Open Settings"
         }
     }
@@ -124,42 +99,22 @@ struct SetupChecklistView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { gameMode.refreshStatus() }
     }
 
-    private func refreshNotificationStatus() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            DispatchQueue.main.async { notificationStatus = settings.authorizationStatus }
-        }
-    }
-
-    private func requestOrOpenNotificationSettings() {
-        if notificationStatus == .denied {
-            openNotificationSettings()
+    private func refreshAccessibilityStatus() {
+        let trustedByAPI = AXIsProcessTrustedWithOptions(nil)
+        guard let frontmost = NSWorkspace.shared.frontmostApplication,
+              frontmost.bundleIdentifier != Bundle.main.bundleIdentifier else {
+            // No frontmost app, or we're frontmost (setup window): only trust the API. Querying our own app can succeed without Accessibility.
+            accessibilityEnabled = trustedByAPI
             return
         }
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in
-            DispatchQueue.main.async { refreshNotificationStatus() }
-        }
+        // Another app is frontmost: probe by querying its windows. If we get -25211 we're not in Accessibility.
+        let denied = accessibilityReturnsAPIDisabled()
+        accessibilityEnabled = trustedByAPI || !denied
     }
 
-    private func openNotificationSettings() {
-        let bundleId = Bundle.main.bundleIdentifier ?? ""
-        if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(bundleId)") {
-            NSWorkspace.shared.open(url)
-        } else if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func refreshAccessibilityStatus() {
-        // AXIsProcessTrustedWithOptions can be false even when the app is in Accessibility (e.g. after rebuild).
-        // Fallback: try the same AX call we use for fullscreen; if we don't get -25211 (APIDisabled), we have access.
-        let trustedByAPI = AXIsProcessTrustedWithOptions(nil)
-        let trustedByProbe = !accessibilityReturnsAPIDisabled()
-        accessibilityEnabled = trustedByAPI || trustedByProbe
-    }
-
-    /// Returns true if our process gets kAXErrorAPIDisabled (-25211) when querying another app. Means we're not in Accessibility.
+    /// Returns true if our process gets kAXErrorAPIDisabled (-25211) when querying the frontmost app's windows.
     private func accessibilityReturnsAPIDisabled() -> Bool {
-        guard let frontmost = NSWorkspace.shared.frontmostApplication else { return false }
+        guard let frontmost = NSWorkspace.shared.frontmostApplication else { return true }
         let appRef = AXUIElementCreateApplication(frontmost.processIdentifier)
         var value: CFTypeRef?
         let err = AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &value)
@@ -174,17 +129,4 @@ struct SetupChecklistView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { refreshAccessibilityStatus() }
     }
 
-    private func refreshInputMonitoringStatus() {
-        // No public API to check Input Monitoring; show as unchecked until we can infer (e.g. after successful hidutil).
-        inputMonitoringEnabled = false
-    }
-
-    private func openInputMonitoringSettings() {
-        // Trigger HID access first so the app appears in Input Monitoring (or user gets the system prompt).
-        KeyboardManager.triggerInputMonitoringPrompt()
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_InputMonitoring") {
-            NSWorkspace.shared.open(url)
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { refreshInputMonitoringStatus() }
-    }
 }

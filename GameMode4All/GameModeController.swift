@@ -16,7 +16,6 @@ import Combine
 import Foundation
 import ServiceManagement
 import SwiftUI
-import UserNotifications
 
 // MARK: - Debug log
 private let debugLoggingEnabledKey = "DebugLoggingEnabled"
@@ -30,7 +29,7 @@ private enum GameModeDebugLog {
     }
 
     static func log(_ message: String) {
-        guard UserDefaults.standard.object(forKey: debugLoggingEnabledKey) as? Bool ?? true else { return }
+        guard UserDefaults.standard.object(forKey: debugLoggingEnabledKey) as? Bool ?? false else { return }
         guard let file = logFileURL else { return }
         let line = "\(ISO8601DateFormatter().string(from: Date())) \(message)\n"
         if let data = line.data(using: .utf8) {
@@ -100,7 +99,7 @@ final class GameModeController: ObservableObject {
     init() {
         self.processNamesToWatch = UserDefaults.standard.stringArray(forKey: processNamesToWatchKey) ?? []
         self.processNamesByApp = Self.loadProcessNamesByApp()
-        self.debugLoggingEnabled = UserDefaults.standard.object(forKey: debugLoggingEnabledKey) as? Bool ?? true
+        self.debugLoggingEnabled = UserDefaults.standard.object(forKey: debugLoggingEnabledKey) as? Bool ?? false
         refreshStartAtLoginStatus()
         // Start observing at launch so Game Mode can turn on even if the user never opens Settings.
         startObservingAppLaunches()
@@ -214,7 +213,6 @@ final class GameModeController: ObservableObject {
     func startObservingAppLaunches() {
         guard launchObserver == nil else { return }
 
-        requestNotificationPermissionIfNeeded()
         startFullscreenCheckTimer()
 
         launchObserver = NSWorkspace.shared.notificationCenter.addObserver(
@@ -281,8 +279,9 @@ final class GameModeController: ObservableObject {
 
         guard let frontmost = NSWorkspace.shared.frontmostApplication,
               let bundleID = frontmost.bundleIdentifier else {
-            GameModeDebugLog.log("check: no frontmost app or no bundleID → set auto")
-            trySetGameModeOff()
+            // Fullscreen games (e.g. CrossOver/Helldivers) often report no frontmost app or no bundleID.
+            // Don't turn Game Mode off here — leave state unchanged so it stays on when the game goes fullscreen.
+            GameModeDebugLog.log("check: no frontmost app or no bundleID → leave state unchanged")
             return
         }
 
@@ -307,15 +306,11 @@ final class GameModeController: ObservableObject {
         }
 
         if shouldEnable {
-            let wasOn = (gameModeState == .on)
             let ok = runGamePolicyCtlSet("on")
             GameModeDebugLog.log("check: set on → success=\(ok)")
             if ok {
                 gameModeState = .on
                 policyState = .manual
-                if !wasOn {
-                    sendNotification(title: "Game Mode is on", body: "Enabled for \(appName)")
-                }
             }
         } else {
             GameModeDebugLog.log("check: shouldEnable=false → set auto")
@@ -324,15 +319,11 @@ final class GameModeController: ObservableObject {
     }
 
     private func trySetGameModeOff() {
-        let wasOn = (gameModeState == .on)
         let ok = runGamePolicyCtlSet("auto")
         GameModeDebugLog.log("set auto → success=\(ok)")
         if ok {
             policyState = .automatic
             gameModeState = .off
-            if wasOn {
-                sendNotification(title: "Game Mode is off", body: "Back to automatic.")
-            }
         }
     }
 
@@ -355,8 +346,8 @@ final class GameModeController: ObservableObject {
         let minFullscreenHeight = screenSize.height * 0.95
 
         for i in 0..<count {
-            guard let windowPtr = CFArrayGetValueAtIndex(cfArray, i) else { continue }
-            let window = windowPtr.load(as: AXUIElement.self)
+            let windowPtr = CFArrayGetValueAtIndex(cfArray, i)
+            let window = unsafeBitCast(windowPtr, to: AXUIElement.self)
 
             // 1) Prefer AXFullScreen if the app reports it (native fullscreen).
             var fsValue: CFTypeRef?
@@ -378,8 +369,9 @@ final class GameModeController: ObservableObject {
             }
         }
         // Log first window's details to help debug why we didn't detect fullscreen
-        if count > 0, let windowPtr = CFArrayGetValueAtIndex(cfArray, 0) {
-            let window = windowPtr.load(as: AXUIElement.self)
+        if count > 0 {
+            let windowPtr = CFArrayGetValueAtIndex(cfArray, 0)
+            let window = unsafeBitCast(windowPtr, to: AXUIElement.self)
             var fsValue: CFTypeRef?
             let fsErr = AXUIElementCopyAttributeValue(window, "AXFullScreen" as CFString, &fsValue)
             var sizeValue: CFTypeRef?
@@ -472,16 +464,4 @@ final class GameModeController: ObservableObject {
         return output.contains(policy)
     }
 
-    private func requestNotificationPermissionIfNeeded() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
-    }
-
-    private func sendNotification(title: String, body: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
-    }
 }

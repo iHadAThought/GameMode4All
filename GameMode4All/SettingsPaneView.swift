@@ -34,13 +34,7 @@ struct MainAppView: View {
                 AppCard(title: "CrossOver (CodeWeavers)", help: "If CrossOver games (e.g. Risk of Rain 2, Steam) don't appear above, click \"Add CrossOver applications folder…\" and choose the CrossOver folder. Applications in that folder appear below; select them to enable Game Mode when CrossOver is frontmost.") {
                     crossOverCardContent
                 }
-                AppCard(title: "External Keyboard", help: "Swap Command (⌘) and Option (⌥) on a Windows-style external keyboard so they match Mac layout. Uses hidutil; apply at login re-applies the swap when you log in.") {
-                    ExternalKeyboardView()
-                }
-                AppCard(title: "Natural Scrolling", help: "Set natural scrolling separately for trackpad and mouse. When “separate” is on, the app uses an event tap (requires Accessibility). When off, uses the system setting.") {
-                    NaturalScrollingView()
-                }
-                AppCard(title: "Settings", help: "Start at login and debug logging options.") {
+                AppCard(title: "Settings", help: "Start GameMode4All at login and debug logging options.") {
                     settingsCardContent
                 }
             }
@@ -65,7 +59,7 @@ struct MainAppView: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("This will remove app data, the External Keyboard login item, and open System Settings so you can remove this app from Accessibility and Input Monitoring. The app will then quit. You can drag the app to Trash to remove it completely. Command Line Tools / Xcode are not modified.")
+            Text("This will remove app data and open System Settings so you can remove this app from Accessibility. The app will then quit. You can drag the app to Trash to remove it completely. Command Line Tools / Xcode are not modified.")
         }
     }
 
@@ -161,9 +155,9 @@ struct MainAppView: View {
 
     @ViewBuilder private var settingsCardContent: some View {
         HStack {
-            Text("Start at login")
+            Text("Start GameMode4All at login")
             Spacer()
-            Toggle("Start at login", isOn: Binding(
+            Toggle("Start GameMode4All at login", isOn: Binding(
                 get: { gameMode.startAtLoginEnabled },
                 set: { gameMode.setStartAtLogin($0) }
             ))
@@ -415,6 +409,5 @@ private struct AppRowView: View {
     MainAppView()
         .environmentObject(GameModeController.shared)
         .environmentObject(InstalledAppStore.shared)
-        .environmentObject(ScrollPreferences.shared)
         .frame(width: 480, height: 620)
 }
