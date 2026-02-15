@@ -19,6 +19,7 @@
 		BF07F /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR07F /* StatusBarController.swift */; };
 		BF07B /* KeyboardInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR07B /* KeyboardInfo.swift */; };
 		BF07C /* KeyboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR07C /* KeyboardManager.swift */; };
+		BF07D /* GameModeHotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FR07D /* GameModeHotKeyManager.swift */; };
 		FX01 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FX02 /* IOKit.framework */; };
 		BF09 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FR09 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -36,6 +37,7 @@
 		FR07F /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		FR07B /* KeyboardInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardInfo.swift; sourceTree = "<group>"; };
 		FR07C /* KeyboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardManager.swift; sourceTree = "<group>"; };
+		FR07D /* GameModeHotKeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModeHotKeyManager.swift; sourceTree = "<group>"; };
 		FX02 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		FR08 /* GameMode4All.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GameMode4All.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FR09 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 				FR07A /* SetupChecklistView.swift */,
 				FR07B /* KeyboardInfo.swift */,
 				FR07C /* KeyboardManager.swift */,
+				FR07D /* GameModeHotKeyManager.swift */,
 				FR07E /* UninstallHelper.swift */,
 				FR07F /* StatusBarController.swift */,
 				FR09 /* Assets.xcassets */,
@@ -172,6 +175,7 @@
 				BF07A /* SetupChecklistView.swift in Sources */,
 				BF07B /* KeyboardInfo.swift in Sources */,
 				BF07C /* KeyboardManager.swift in Sources */,
+				BF07D /* GameModeHotKeyManager.swift in Sources */,
 				BF07E /* UninstallHelper.swift in Sources */,
 				BF07F /* StatusBarController.swift in Sources */,
 			);

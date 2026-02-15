@@ -21,6 +21,7 @@ struct MainAppView: View {
     @AppStorage("IsAppsListExpanded") private var isAppsListExpanded = true
     @AppStorage("IsCrossOverListExpanded") private var isCrossOverListExpanded = true
     @StateObject private var keyboardManager = KeyboardManager()
+    @ObservedObject private var hotKeyManager = GameModeHotKeyManager.shared
 
     var body: some View {
         ScrollView {
@@ -42,7 +43,7 @@ struct MainAppView: View {
                 AppCard(title: "Keyboard (Modifier Keys)", help: "Swap Command (⌘) and Option (⌥) for a selected keyboard, like System Settings → Keyboard → Modifier Keys. Uses hidutil. Choose one: \"Save swap at login\" (Launch Agent re-applies after restart) or \"Swap keys in Game Mode\" (swap only when Game Mode is on).") {
                     keyboardCardContent
                 }
-                AppCard(title: "Settings", help: "Start GameMode4All at login and debug logging options.") {
+                AppCard(title: "Settings", help: "Game Mode shortcut: press the key combo to sync Game Mode based on the frontmost fullscreen app (on if a trigger app is fullscreen, off otherwise). Requires Accessibility. Start GameMode4All at login and debug logging.") {
                     settingsCardContent
                 }
             }
@@ -234,6 +235,26 @@ struct MainAppView: View {
     }
 
     @ViewBuilder private var settingsCardContent: some View {
+        HStack {
+            Text("Game Mode shortcut")
+            Spacer()
+            Text(hotKeyManager.shortcutDisplay)
+                .font(.system(.body, design: .monospaced))
+                .foregroundStyle(.secondary)
+            if hotKeyManager.isRecording {
+                Button("Press keys…") { }
+                    .buttonStyle(.bordered)
+                    .disabled(true)
+            } else {
+                Button("Record…") {
+                    hotKeyManager.startRecording()
+                }
+                .buttonStyle(.bordered)
+            }
+            Toggle("Game Mode shortcut", isOn: $hotKeyManager.isEnabled)
+                .labelsHidden()
+                .toggleStyle(.switch)
+        }
         HStack {
             Text("Start GameMode4All at login")
             Spacer()

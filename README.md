@@ -1,12 +1,13 @@
 # GameMode4All
 
-A macOS menu bar app that adds a **System Settings–style pane** to choose which applications should turn on **Game Mode** when they launch. When any selected app starts, Game Mode is enabled automatically; when the last selected app quits, it can switch back to the system default.
+A macOS menu bar app that adds a **System Settings–style pane** to choose which games or apps should turn on **Game Mode** when fullscreen and frontmost. Game Mode follows the same rule as Apple: on when a trigger app is fullscreen and frontmost, off otherwise.
 
 ## Requirements
 
 - **macOS 14 (Sonoma) or later**
 - **Apple Silicon Mac** (Game Mode is not available on Intel Macs)
 - **Xcode** installed (for the `gamepolicyctl` tool; the app does not ship it)
+- **Accessibility** permission (for fullscreen detection and the Game Mode shortcut)
 
 ## What Game Mode does to your Mac
 
@@ -27,30 +28,36 @@ Game Mode is intended for gaming or focused app sessions. When it’s on, backgr
 
 ## How to use
 
-1. **Launch the app** — it runs from the menu bar (game controller icon). It does not appear in the Dock (`LSUIElement`).
-2. **Open settings** — click the menu bar icon, then **“Open Game Mode Settings…”** (or use **⌘,** when the app is focused). This opens the main settings window.
-3. **Choose apps** — the pane lists installed applications from `/Applications`, `/System/Applications`, and your user `~/Applications`. Check the apps that should enable Game Mode when they start.
-4. **Behavior** — leave **“Turn Game Mode back to automatic when no selected app is running”** on so that when you quit the last selected app, Game Mode returns to the system default.
-5. **Keyboard (Modifier Keys)** — optionally swap Command (⌘) and Option (⌥) for any connected keyboard (like System Settings → Keyboard → Modifier Keys). Uses `hidutil`; changes are temporary and reset after restart.
+1. **Launch the app** — it runs from the menu bar (game controller icon). It does not appear in the Dock.
+2. **Open settings** — click the menu bar icon, then **“Open GameMode4All…”** (or use **⌘,** when the app is focused).
+3. **Mac Apps** — choose games or apps from the main list. Each list has its own search bar and can be collapsed.
+4. **CrossOver** — add the CrossOver applications folder to list CrossOver/Wine games; these appear in a separate section.
+5. **Keyboard (Modifier Keys)** — swap Command (⌘) and Option (⌥) for a selected keyboard. Choose one: **Save swap at login** (Launch Agent re-applies after restart) or **Swap keys in Game Mode** (swap only when Game Mode is on).
+6. **Settings** — **Game Mode shortcut** (default ⌘⇧G): press the combo to sync Game Mode based on the frontmost fullscreen app. Enable the shortcut and optionally **Record…** a custom combo. **Start GameMode4All at login**, **Reopen setup**, debug logging, and **Uninstall…**.
 
-Game Mode is turned **on** when you launch any selected app, and (if the option above is on) is set back to **automatic** when none of those apps are running.
+Game Mode is turned **on** when a selected app is fullscreen and frontmost, and **off** when it is not (or when you press the shortcut to re-evaluate).
 
 ## How it works
 
-- The app uses **`xcrun gamepolicyctl game-mode set on|auto`**, which is provided by Xcode. If Xcode is not installed (or not at `/Applications/Xcode.app`), the status will show that Game Mode control is unavailable.
-- It observes **app launch/quit** via `NSWorkspace.didLaunchApplicationNotification` and `didTerminateApplicationNotification`, and keeps a list of selected apps by **bundle ID** in UserDefaults.
-- **Keyboard (Modifier Keys)** is integrated from KeySwap: IOKit enumerates HID keyboards, and **`hidutil`** applies `UserKeyMapping` to swap ⌘ and ⌥. App Sandbox must be disabled (already is) for `hidutil` to run.
-- The settings UI is a standard SwiftUI **Form** with search, similar to a System Settings pane. The app does not install a real third-party pane inside System Settings (Apple does not support that on modern macOS); instead it provides its own settings window.
+- **`xcrun gamepolicyctl game-mode set on|auto`** — provided by Xcode; controls Game Mode.
+- **App observation** — observes app launch/terminate via `NSWorkspace`, plus a fullscreen check timer. Keeps selected bundle IDs in UserDefaults.
+- **Keyboard (Modifier Keys)** — KeySwap integration: IOKit enumerates HID keyboards, `hidutil` applies `UserKeyMapping`. Launch Agent option for login persistence; optional swap-only-when-Game-Mode-on.
+- **Game Mode shortcut** — `NSEvent.addGlobalMonitorForEvents` captures the key combo globally; triggers `syncGameModeForFrontmostApp()` (same logic as the automatic fullscreen check).
+- **Accessibility** — required for fullscreen detection and global key monitoring. App Sandbox is disabled (needed for `hidutil`).
 
 ## Project structure
 
-- **GameMode4AllApp.swift** — App entry, `Settings` scene (main pane), and menu bar extra.
-- **SettingsPaneView.swift** — System Settings–style form: status, behavior toggle, and searchable app list with checkboxes.
-- **InstalledAppsProvider.swift** — Enumerates `.app` bundles under `/Applications`, `/System/Applications`, and the user Applications directory.
-- **InstalledAppStore.swift** — Persists selected bundle IDs in UserDefaults and exposes them to the UI.
-- **GameModeController.swift** — Runs `gamepolicyctl`, observes app launch/terminate, and turns Game Mode on/auto as needed.
-- **KeyboardInfo.swift** / **KeyboardManager.swift** — KeySwap integration: enumerate keyboards (IOKit), swap Command ⇄ Option via `hidutil`.
-- **MenuBarMenuView.swift** — Menu bar dropdown: status, “Open Game Mode Settings…”, Quit.
+- **GameMode4AllApp.swift** — App entry, main window scene, FirstRunState.
+- **SettingsPaneView.swift** — Main pane: Status, Mac Apps, CrossOver, Keyboard, Settings (with collapsible searchable lists).
+- **InstalledAppsProvider.swift** — Enumerates `.app` bundles; excludes CrossOver apps from the main list.
+- **InstalledAppStore.swift** — Persists selected bundle IDs, CrossOver folders, and app lists.
+- **GameModeController.swift** — Runs `gamepolicyctl`, observes apps, fullscreen check, `syncGameModeForFrontmostApp()`.
+- **GameModeHotKeyManager.swift** — Global shortcut registration and recording.
+- **KeyboardInfo.swift** / **KeyboardManager.swift** — KeySwap: IOKit + `hidutil`, Save at login / Swap in Game Mode.
+- **StatusBarController.swift** — Menu bar icon (green when Game Mode is on).
+- **MenuBarMenuView.swift** — Menu bar dropdown: status, "Open GameMode4All…", Quit.
+- **SetupChecklistView.swift** — First-run setup (Xcode, Accessibility).
+- **UninstallHelper.swift** — Uninstall flow.
 
 ## License
 

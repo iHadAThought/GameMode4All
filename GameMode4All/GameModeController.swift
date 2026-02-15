@@ -253,6 +253,11 @@ final class GameModeController: ObservableObject {
         refreshStatus()
     }
 
+    /// Re-evaluates the frontmost fullscreen app and sets Game Mode accordingly (same logic as automatic). Called by the manual shortcut.
+    func syncGameModeForFrontmostApp() {
+        checkFullscreenAndUpdateGameMode()
+    }
+
     // MARK: - Private (match Apple: full screen + frontmost)
 
     private func startFullscreenCheckTimer() {

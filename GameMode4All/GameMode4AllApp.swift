@@ -14,6 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         GameModeController.shared.refreshStatus()
         statusBarController = StatusBarController()
+        Task { @MainActor in
+            GameModeHotKeyManager.shared.start()
+        }
         // Don't show the main window at launch (e.g. when starting at login) — only the menu bar icon.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.hideMainWindow()
