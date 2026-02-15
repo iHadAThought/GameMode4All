@@ -131,7 +131,7 @@ final class GameModeHotKeyManager: ObservableObject {
         let kc = keyCode
         let mods = modifiers
 
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
             let eventMods = event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue
             if event.keyCode == kc && eventMods == mods {
                 Task { @MainActor in
