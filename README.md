@@ -1,7 +1,6 @@
 # GameMode4All
 
-A macOS menu bar app that adds a **System Settings–style pane** to choose which games or apps should turn on **Game Mode** when fullscreen and frontmost. Game Mode follows the same rule as Apple: on when a trigger app is fullscreen and frontmost, off otherwise.
-
+A macOS menu bar app that adds a **System Settings–style pane** to choose which games or apps should turn on **Game Mode** when fullscreen and frontmost.
 ## Requirements
 
 - **macOS 14 (Sonoma) or later**
